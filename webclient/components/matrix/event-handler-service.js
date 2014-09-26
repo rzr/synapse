@@ -44,6 +44,11 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
     // of the app, given we never try to reap memory yet)
     var eventMap = {};
 
+    // @MEMORY_COLLECT_TEST: Minimal stats on events data usage
+    $rootScope.memoryStats = {
+        jsmemory: window.performance.memory
+    };
+
     $rootScope.presence = {};
     
     // TODO: This is attached to the rootScope so .html can just go containsBingWord
@@ -403,6 +408,22 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
         return displayName;
     };
 
+    // @MEMORY_COLLECT_TEST: Minimal stats on events data usage
+    var updateMemoryStats = function() {
+        $rootScope.memoryStats.eventMapCount = Object.keys(eventMap).length;
+        
+        $rootScope.memoryStats.messagesCount = 0;
+        for (var i in $rootScope.events.rooms) {
+            var room = $rootScope.events.rooms[i];
+            
+            $rootScope.memoryStats.messagesCount += room.messages.length;
+        }
+        
+        //$rootScope.memoryStats.jsmemory = window.performance.memory;      // Useless
+        //$rootScope.memoryStats.sizeof = sizeof($rootScope.events);        // Too slow. Freeze the app when there is too much events
+    };
+    updateMemoryStats();
+
     return {
         ROOM_CREATE_EVENT: ROOM_CREATE_EVENT,
         MSG_EVENT: MSG_EVENT,
@@ -423,7 +444,7 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             initRoom(room.room_id, room);
         },
     
-        handleEvent: function(event, isLiveEvent, isStateEvent) {
+        handleEvent: function(event, isLiveEvent, isStateEvent, pagStart, pagEnd) {
 
             // FIXME: /initialSync on a particular room is not yet available
             // So initRoom on a new room is not called. Make sure the room data is initialised here
@@ -444,7 +465,10 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
                     return;
                 }
                 else {
-                    eventMap[event.event_id] = 1;
+                    eventMap[event.event_id] = {
+                        start: pagStart,
+                        end: pagEnd
+                    };
                 }
             }
 
@@ -491,10 +515,12 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
         
         // isLiveEvents determines whether notifications should be shown, whether
         // messages get appended to the start/end of lists, etc.
-        handleEvents: function(events, isLiveEvents, isStateEvents) {
+        handleEvents: function(events, isLiveEvents, isStateEvents, pagStart, pagEnd) {
             for (var i=0; i<events.length; i++) {
-                this.handleEvent(events[i], isLiveEvents, isStateEvents);
+                this.handleEvent(events[i], isLiveEvents, isStateEvents, pagStart, pagEnd);
             }
+            
+            updateMemoryStats();
         },
 
         // Handle messages from /initialSync or /messages
@@ -507,7 +533,7 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             if (dir && 'b' === dir) {
                 // paginateBackMessages requests messages to be in reverse chronological order
                 for (var i=0; i<events.length; i++) {
-                    this.handleEvent(events[i], isLiveEvents, isLiveEvents);
+                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.start, messages.end);
                 }
                 
                 // Store how far back we've paginated
@@ -516,11 +542,12 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             else {
                 // InitialSync returns messages in chronological order
                 for (var i=events.length - 1; i>=0; i--) {
-                    this.handleEvent(events[i], isLiveEvents, isLiveEvents);
+                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.start, messages.end);
                 }
                 // Store where to start pagination
                 $rootScope.events.rooms[room_id].pagination.earliest_token = messages.start;
             }
+            updateMemoryStats();
         },
 
         handleInitialSyncDone: function(initialSyncData) {
@@ -616,6 +643,58 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             var room = $rootScope.events.rooms[room_id];
             if (room) {
                 room.visibility = visible;
+            }
+        },
+        
+        /**
+         * Release the oldest cache data for the room in order to save memory
+         * @param {String} room_id the room id
+         * @param {type} keepMessagesCount the number of messages to keep (from the last message)
+         */
+        releaseRoomCache: function(room_id, keepMessagesCount) {
+            var room = $rootScope.events.rooms[room_id];
+            if (room) {
+                
+                if (keepMessagesCount < room.messages.length) {
+                    
+                    // Commented lines are some attemps to execute the cleaning code in order to not interfere with AngularJS.
+                    // This "interference" (not explained yet) prevents the JS garbage collector from releasing memory.
+                    // This is even worse since the retained memory size increases when this function is called from a bad point of ng cycles
+                    // None of these methods work. 
+                    
+                    // The memory cleaning code does not work (it even generates zombie memory) when releaseRoomCache is called from:
+                    //    - an angular watch event
+                    //    - a ng-click that requires an expression to be evaluated
+                    
+                    // The memory cleaning works when releaseRoomCache is called from:
+                    //    - ng-click with no expression to be evaluated
+                    //    - the contruction code of a controller
+                    
+                    // The tool to check memory usage is in the Chrome debugger, profiles -> "Take Heap Snaphot"
+                    // Take several snapshots during the app life to check how the memory evolves
+                    
+                    //setTimeout(function() {
+                    //$timeout(function() {
+                    //$rootScope.$apply(function () {
+                        console.log("BEFORE: room.messages.length: " + room.messages.length + " - eventMap.length: " + Object.keys(eventMap).length);
+
+                        // Clean messages from the eventMap
+                        for (var i = room.messages.length - keepMessagesCount - 1; 0 <= i; i--) {
+                            var message = room.messages[i];
+
+                            if (message.event_id) {
+                                delete eventMap[message.event_id];
+                            }
+                        }
+                        // Remove those messages from the room
+                        room.messages.splice(0, room.messages.length - keepMessagesCount);
+
+                        console.log("AFTER : room.messages.length: " + room.messages.length + " - eventMap.length: " + Object.keys(eventMap).length);
+                        
+                        updateMemoryStats();
+                    //});
+                    //}, 5 * 1000);
+                }
             }
         }
     };

@@ -69,7 +69,7 @@ angular.module('eventStreamService', [])
                     "[EventStream] Got response from "+settings.from+
                     " to "+response.data.end
                 );
-                eventHandlerService.handleEvents(response.data.chunk, true);
+                eventHandlerService.handleEvents(response.data.chunk, true, false, response.data.start, response.data.end);
                 
                 deferred.resolve(response);
                 
@@ -107,7 +107,7 @@ angular.module('eventStreamService', [])
         // Initial sync: get all information and the last 30 messages of all rooms of the user
         // 30 messages should be enough to display a full page of messages in a room
         // without requiring to make an additional request
-        matrixService.initialSync(30, false).then(
+        matrixService.initialSync(3000, false).then(    // @MEMORY_COLLECT_TEST: fill up memory
             function(response) {
                 var rooms = response.data.rooms;
                 for (var i = 0; i < rooms.length; ++i) {

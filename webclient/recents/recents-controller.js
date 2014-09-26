@@ -27,5 +27,18 @@ angular.module('RecentsController', ['matrixService', 'matrixFilter'])
     // in order to highlight a specific room in the list
     $rootScope.recentsSelectedRoomID;
 
+    // @MEMORY_COLLECT_TEST: overload goToPage to clean the cache of the current room - the one we are leaving
+    $scope.goToPage = function(url) {
+
+/* releaseRoomCache does not work when called from this point 
+        if ($rootScope.recentsSelectedRoomID) {
+            eventHandlerService.releaseRoomCache($rootScope.recentsSelectedRoomID, 1);
+            $rootScope.recentsSelectedRoomID = undefined;
+        }
+*/
+
+        $scope.$parent.goToPage(url);
+    };
+
 }]);
 

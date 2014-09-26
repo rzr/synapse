@@ -218,4 +218,21 @@ angular.module('MatrixWebClientController', ['matrixService', 'mPresence', 'even
             }, 4070);
         }
     };
+
+    // @MEMORY_COLLECT_TEST: play with releaseRoomCache
+    // releaseRoomCache perfectly works when called from here
+    $scope.memory = {
+        // Release all rooms caches
+        collect: function() {
+            for (var i in $rootScope.events.rooms) {
+                var room = $rootScope.events.rooms[i];
+                eventHandlerService.releaseRoomCache(room.room_id, 3);
+            }
+        },
+        // Release the current room cache
+        collectCurrentRoom: function() {
+            eventHandlerService.releaseRoomCache($rootScope.recentsSelectedRoomID, 3);
+        }
+    };
+
 }]);

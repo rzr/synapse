@@ -783,7 +783,7 @@ angular.module('RoomController', ['ngSanitize', 'matrixFilter', 'mFileInput'])
         console.log("onInit3");
 
         // Make recents highlight the current room
-        $scope.recentsSelectedRoomID = $scope.room_id;
+        $rootScope.recentsSelectedRoomID = $scope.room_id;
 
         // Init the history for this room
         history.init();
@@ -814,6 +814,9 @@ angular.module('RoomController', ['ngSanitize', 'matrixFilter', 'mFileInput'])
                     // There are already messages, go to the last message
                     scrollToBottom(true);
                 }
+
+                // @MEMORY_COLLECT_TEST: releaseRoomCache in collect() works when called from here
+                //$scope.memory.collect();
             },
             function(error) {
                 $scope.feedback = "Failed get member list: " + error.data.error;
@@ -982,4 +985,9 @@ angular.module('RoomController', ['ngSanitize', 'matrixFilter', 'mFileInput'])
         }
     };
 
+    $scope.$on("$destroy", function(){
+        // @MEMORY_COLLECT_TEST: We are leaving the page, it seems the perfect moment to release some room memory
+        // But releaseRoomCache does not work when called from this point
+        //eventHandlerService.releaseRoomCache($scope.room_id, 3);
+    });
 }]);

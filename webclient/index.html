@@ -107,6 +107,18 @@
             <button ng-click='goToPage("/")'>Home</button>
             <button ng-click='goToPage("settings")'>Settings</button>
             <button ng-click="logout()">Log out</button>
+
+            <!-- @MEMORY_COLLECT_TEST -->
+            | 
+            <button ng-click="memory.collect()">Collect Memory </button>
+            <button ng-click="memory.collectCurrentRoom()">Collect Current </button>
+            
+            - {{ memoryStats.sizeof }}
+            - {{ memoryStats.eventMapCount }}
+            - {{ memoryStats.messagesCount }}
+          
+            <!-- - {{ memoryStats.jsmemory }} -->
+            
         </div>
     </div>
 
