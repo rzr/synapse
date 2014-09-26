@@ -688,6 +688,9 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
                         }
                         // Remove those messages from the room
                         room.messages.splice(0, room.messages.length - keepMessagesCount);
+                        
+                        // Update the pagination cursor
+                        room.pagination.earliest_token = eventMap[room.messages[0].event_id].end;
 
                         console.log("AFTER : room.messages.length: " + room.messages.length + " - eventMap.length: " + Object.keys(eventMap).length);
                         
