@@ -69,7 +69,7 @@ angular.module('eventStreamService', [])
                     "[EventStream] Got response from "+settings.from+
                     " to "+response.data.end
                 );
-                eventHandlerService.handleEvents(response.data.chunk, true, false, response.data.start, response.data.end);
+                eventHandlerService.handleEvents(response.data.chunk, true, false, response.data.end);
                 
                 deferred.resolve(response);
                 

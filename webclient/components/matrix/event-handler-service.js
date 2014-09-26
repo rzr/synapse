@@ -444,7 +444,7 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             initRoom(room.room_id, room);
         },
     
-        handleEvent: function(event, isLiveEvent, isStateEvent, pagStart, pagEnd) {
+        handleEvent: function(event, isLiveEvent, isStateEvent, pagFrom) {
 
             // FIXME: /initialSync on a particular room is not yet available
             // So initRoom on a new room is not called. Make sure the room data is initialised here
@@ -465,10 +465,8 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
                     return;
                 }
                 else {
-                    eventMap[event.event_id] = {
-                        start: pagStart,
-                        end: pagEnd
-                    };
+                    // pagFrom is the token to paginate from in order to retrieve this event again
+                    eventMap[event.event_id] = pagFrom;
                 }
             }
 
@@ -515,9 +513,9 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
         
         // isLiveEvents determines whether notifications should be shown, whether
         // messages get appended to the start/end of lists, etc.
-        handleEvents: function(events, isLiveEvents, isStateEvents, pagStart, pagEnd) {
+        handleEvents: function(events, isLiveEvents, isStateEvents, pagFrom) {
             for (var i=0; i<events.length; i++) {
-                this.handleEvent(events[i], isLiveEvents, isStateEvents, pagStart, pagEnd);
+                this.handleEvent(events[i], isLiveEvents, isStateEvents, pagFrom);
             }
             
             updateMemoryStats();
@@ -533,7 +531,7 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             if (dir && 'b' === dir) {
                 // paginateBackMessages requests messages to be in reverse chronological order
                 for (var i=0; i<events.length; i++) {
-                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.start, messages.end);
+                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.start);
                 }
                 
                 // Store how far back we've paginated
@@ -542,7 +540,7 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
             else {
                 // InitialSync returns messages in chronological order
                 for (var i=events.length - 1; i>=0; i--) {
-                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.start, messages.end);
+                    this.handleEvent(events[i], isLiveEvents, isLiveEvents, messages.end);
                 }
                 // Store where to start pagination
                 $rootScope.events.rooms[room_id].pagination.earliest_token = messages.start;
@@ -678,6 +676,10 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
                     //$rootScope.$apply(function () {
                         console.log("BEFORE: room.messages.length: " + room.messages.length + " - eventMap.length: " + Object.keys(eventMap).length);
 
+                        // Update the pagination cursor
+                        var lastMessageToBeDeleted = room.messages[room.messages.length - keepMessagesCount - 1];
+                        room.pagination.earliest_token = eventMap[lastMessageToBeDeleted.event_id];
+
                         // Clean messages from the eventMap
                         for (var i = room.messages.length - keepMessagesCount - 1; 0 <= i; i--) {
                             var message = room.messages[i];
@@ -686,11 +688,9 @@ function(matrixService, $rootScope, $q, $timeout, mPresence) {
                                 delete eventMap[message.event_id];
                             }
                         }
+
                         // Remove those messages from the room
                         room.messages.splice(0, room.messages.length - keepMessagesCount);
-                        
-                        // Update the pagination cursor
-                        room.pagination.earliest_token = eventMap[room.messages[0].event_id].end;
 
                         console.log("AFTER : room.messages.length: " + room.messages.length + " - eventMap.length: " + Object.keys(eventMap).length);
                         
