@@ -37,10 +37,16 @@ angular.module('mFileInput', [])
                 element.bind("click", function() {
                     element.find("input")[0].click();
                     element.find("input").bind("change", function(e) {
+                        element.find("input").unbind("change");
                         scope.selectedFile = this.files[0];
                         scope.$apply();
                     });
                 });
+
+                scope.$on("$destroy", function() {
+                    element.unbind("click");
+                    element.find("input").unbind("change");
+                }); 
             }
             else {
                 setTimeout(function() {

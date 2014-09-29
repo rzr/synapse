@@ -27,6 +27,10 @@ angular.module('matrixWebClient')
                 event.preventDefault();
             }
         });
+
+        scope.$on("$destroy", function() {
+            element.unbind("keydown keypress");
+        }); 
     };
 })
 .directive('ngFocus', ['$timeout', function($timeout) {

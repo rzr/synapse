@@ -142,6 +142,10 @@ angular.module('RoomController')
                 scope.tabCompleteIndex = 0;
             }
         });
+
+        scope.$on("$destroy", function() {
+            element.unbind("keydown keypress");
+        }); 
     };
 }])
 .directive('commandHistory', [ function() {
@@ -157,7 +161,11 @@ angular.module('RoomController')
                 scope.history.goDown(event);
             } 
         });
-    }
+
+        scope.$on("$destroy", function() {
+            element.unbind("keydown");
+        });
+    };
 }])
 
 // A directive to anchor the scroller position at the bottom when the browser is resizing.
@@ -182,6 +190,10 @@ angular.module('RoomController')
                 // Store the new window height for the next screen size change
                 scope.windowHeight = $window.innerHeight;
             });
+
+            scope.$on("$destroy", function() {
+                angular.element($window).unbind('resize');
+            }); 
         }
     };
 }]);
