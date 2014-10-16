@@ -131,7 +131,7 @@ non-essential event contents. Before signing the event it is encoded as
 Canonical JSON and hashed using SHA-256. The resulting hash is then stored
 in the event JSON in a ``hash`` object under a ``sha256`` key. Then all
 non-essential keys are stripped from the event object, and the resulting object
-which included the ``hash`` key is signed using the JSON signing algorithm.
+(including the ``hash`` key) is signed using the JSON signing algorithm.
 
 Servers can then transmit the entire event or the event with the non-essential
 keys removed. Receiving servers can then check the entire event if it is
