@@ -1,0 +1,23 @@
+Source: synapse
+Section: unknown
+Priority: optional
+Maintainer: Philippe Coval <rzr@gna.org>
+Build-Depends: debhelper (>= 9),
+  uild-essential,
+  python2.7-dev,
+  libffi-dev,
+  python-pip,
+  python-setuptools,
+Standards-Version: 3.9.5
+Homepage: http://matrix.org
+#Vcs-Git: git://anonscm.debian.org/collab-maint/synapse.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/synapse.git;a=summary
+
+Package: synapse
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+  python-bcrypt,
+  python-daemonize,
+  libsodium13
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>

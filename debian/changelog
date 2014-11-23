@@ -1,0 +1,5 @@
+synapse (0.0.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Philippe Coval <rzr@gna.org>  Sun, 23 Nov 2014 14:16:54 +0100
