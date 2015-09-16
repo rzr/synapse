@@ -1,0 +1,27 @@
+Description: Remove setup dependency on twisted
+ Synapse included a setup dependency on twisted to make the tests work, 
+ however setup dependencies are required before the debian dependencies
+ get fetched.
+ .
+ matrix-synapse (0.10.0~rc3-1) trusty; urgency=medium
+ .
+   * New upstream release
+Author: Erik Johnston <erikj@matrix.org>
+
+Index: matrix-synapse-0.10.0-r1/setup.py
+===================================================================
+--- matrix-synapse-0.10.0-r1.orig/setup.py	2015-09-08 11:05:59.567129550 +0100
++++ matrix-synapse-0.10.0-r1/setup.py	2015-09-08 11:06:32.619227649 +0100
+@@ -47,11 +47,7 @@
+     packages=find_packages(exclude=["tests", "tests.*"]),
+     description="Reference Synapse Home Server",
+     install_requires=dependencies['requirements'](include_conditional=True).keys(),
+-    setup_requires=[
+-        "Twisted>=15.1.0", # Here to override setuptools_trial's dependency on Twisted>=2.4.0
+-        "setuptools_trial",
+-        "mock"
+-    ],
++    setup_requires=[],
+     dependency_links=dependencies["DEPENDENCY_LINKS"].values(),
+     include_package_data=True,
+     zip_safe=False,
