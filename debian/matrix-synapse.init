@@ -20,6 +20,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="matrix-synapse"
 NAME=matrix-synapse
 SCRIPTNAME=/etc/init.d/$NAME
+SHAREDIR=/var/lib/$NAME
 
 PYTHON="/usr/bin/python"
 CONFIGS="--config-path /etc/matrix-synapse/homeserver.yaml --config-path /etc/matrix-synapse/conf.d/"
@@ -73,6 +74,8 @@ do_start()
 	# Create the PID file so that synapse can write to it as nonroot
 	touch $PIDFILE
 	chown $USER:nogroup $PIDFILE
+
+	chown $USER:nogroup $SHAREDIR/media/
 
 	start-stop-daemon --start --pidfile $PIDFILE --chuid $USER \
 	  --exec $PYTHON -- -m "synapse.app.homeserver" $CONFIGS --daemonize || return 2
